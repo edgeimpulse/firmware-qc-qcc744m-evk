@@ -1,0 +1,11 @@
+sample:
+  description: Run inference using one of the ST sensor hat
+    application
+  name: firmware-qc-qcc744m-evk
+common:
+    tags: introduction
+    harness: console
+    harness_config:
+      type: one_line
+      regex:
+        - "Hello World! (.*)"

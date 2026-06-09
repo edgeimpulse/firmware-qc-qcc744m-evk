@@ -1,0 +1,5 @@
+name: Tutorial_Continuous_motion_recog v252
+build:
+  cmake: .
+  depends:
+    - edge-impulse-sdk-zephyr

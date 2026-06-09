@@ -1,0 +1,17 @@
+/*
+ * Local QCC744M EVK sensor wiring for Arduino Modulino Movement.
+ * This avoids shield label-order issues by attaching the device directly to i2c0.
+ */
+
+/ {
+	aliases {
+		accel0 = &arduino_modulino_movement;
+	};
+};
+
+&i2c0 {
+	arduino_modulino_movement: arduino-modulino-movement@6a {
+		compatible = "st,lsm6dso";
+		reg = <0x6a>;
+	};
+};
