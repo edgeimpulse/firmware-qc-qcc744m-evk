@@ -36,7 +36,7 @@
 #include <zephyr/device.h>
 #include <zephyr/drivers/sensor.h>
 #include "sensors/ei_inertial.h"
-
+#include "inference/inferencing.h"
 
 const struct device *const lsm6dso = DEVICE_DT_GET_ONE(st_lsm6dso);
 
@@ -85,13 +85,16 @@ static void lsm6dso_config(const struct device *lsm6dso)
 
 bool ei_inertial_init(void)
 {
+	printk("Initializing inertial sensor\n");
 	if (!device_is_ready(lsm6dso)) {
-
+		printk("Inertial sensor not ready\n");
 		return false;
 	}
 
 	_is_present = true;
+	printk("lsm6dso_config\n");
     lsm6dso_config(lsm6dso);
+	printk("done\n");
 
     return true;
 }
@@ -109,7 +112,7 @@ float *ei_fusion_inertial_read_data(int n_samples)
 	}
 
     if (sensor_sample_fetch(lsm6dso) < 0) {
-
+		printk("error sensor_sample_fetch\n");
     }
     else {
 		
@@ -124,6 +127,8 @@ float *ei_fusion_inertial_read_data(int n_samples)
 			inertial[4] = sensor_value_to_double(&gyro[1]);
 			inertial[5] = sensor_value_to_double(&gyro[2]);
 		}
+
+		ei_samples_callback(inertial, n_samples * sizeof(float));
     }
 
     return inertial;

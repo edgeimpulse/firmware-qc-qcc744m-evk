@@ -36,7 +36,16 @@ Your `model/` directory should contain:
 ## Supported shield
 
 --shield arduino_modulino_movement
-https://docs.zephyrproject.org/latest/boards/shields/arduino_modulino_movement/doc/index.html
+
+### Arduino modulino movement
+[Arduino Modulino movement](thttps://docs.zephyrproject.org/latest/boards/shields/arduino_modulino_movement/doc/index.html)
+
+How to connect:
+Modulino <->QCC EVK
+GND <-> GND
+3V3 <-> VDD_3V3
+SDA <-> GPIO23
+SCL <-> GPIO24
 
 ## Build
 

@@ -66,8 +66,7 @@ bool ei_samples_callback(const void *raw_sample, uint32_t raw_sample_size)
         if (samples_wr_index > EI_CLASSIFIER_DSP_INPUT_FRAME_SIZE) {
             /* start from beginning of the circular buffer */
             samples_wr_index = 0;
-        }
-
+        }        
         if (samples_wr_index >= samples_per_inference) {
             //
             state = INFERENCE_STATE_DATA_READY;
@@ -89,18 +88,16 @@ bool ei_inference_sm(void)
 
     while(INFERENCE_STATE_STOP != state) {
         switch(state){
-            case INFERENCE_STATE_SAMPLING:
-                ei_fusion_inertial_read_data(3);
+            case INFERENCE_STATE_SAMPLING:                
+                ei_fusion_inertial_read_data(EI_CLASSIFIER_RAW_SAMPLES_PER_FRAME);
                 ei_sleep(EI_CLASSIFIER_INTERVAL_MS);
                 // wait for data
                 break;
-            case INFERENCE_STATE_DATA_READY:
-                ei_printf("Data ready\n");
+            case INFERENCE_STATE_DATA_READY:            
                 // run inference, not much to do in this example
                 state = INFERENCE_STATE_RUNNING;
                 break;
-            case INFERENCE_STATE_RUNNING:
-                ei_printf("run inference\n");
+            case INFERENCE_STATE_RUNNING:                
                 if (ei_run_inference() == false) {
                     ei_printf("ERR: Inference failed\n");
                 }
