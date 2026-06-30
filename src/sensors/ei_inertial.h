@@ -37,7 +37,17 @@
 
 #define INERTIAL_AXIS_SAMPLED          6
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 bool ei_inertial_init(void);
 float *ei_fusion_inertial_read_data(int n_samples);
+bool ei_inertial_is_present(void);
+bool ei_inertial_read_data_fwd(float* intertial);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* EI_INERTIAL_H */

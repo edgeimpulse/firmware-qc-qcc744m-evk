@@ -133,3 +133,37 @@ float *ei_fusion_inertial_read_data(int n_samples)
 
     return inertial;
 }
+
+bool ei_inertial_read_data_fwd(float* intertial)
+{
+	if (!_is_present) {
+		return false;
+	}
+
+	struct sensor_value accel[3];
+	struct sensor_value gyro[3];
+
+	if (sensor_sample_fetch(lsm6dso) < 0) {
+		printk("error sensor_sample_fetch\n");
+		return false;
+	}
+	else {
+		
+		sensor_channel_get(lsm6dso, SENSOR_CHAN_ACCEL_XYZ, accel);		
+		intertial[0] = sensor_value_to_double(&accel[0]);
+		intertial[1] = sensor_value_to_double(&accel[1]);
+		intertial[2] = sensor_value_to_double(&accel[2]);
+
+		sensor_channel_get(lsm6dso, SENSOR_CHAN_GYRO_XYZ, gyro);
+		intertial[3] = sensor_value_to_double(&gyro[0]);
+		intertial[4] = sensor_value_to_double(&gyro[1]);
+		intertial[5] = sensor_value_to_double(&gyro[2]);
+	}
+
+	return true;
+}
+
+bool ei_inertial_is_present(void)
+{
+	return _is_present;
+}

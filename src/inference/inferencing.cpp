@@ -31,15 +31,21 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#
+#include <zephyr/kernel.h>
 #include "inference/inferencing.h"
 #include "edge-impulse-sdk/classifier/ei_run_classifier.h"
 #include "edge-impulse-sdk/dsp/numpy.hpp"
 #include "sensors/ei_inertial.h"
 
 static bool ei_run_inference(void);
-static bool ei_start_impulse(void);
-static bool ei_stop_impulse(void);
+static void ei_inference_task(void *arg1, void *arg2, void *arg3);
+
+#define EI_INFERENCE_STACK_SIZE 4096
+#define EI_INFERENCE_PRIORITY 5
+
+K_THREAD_STACK_DEFINE(ei_inference_stack, EI_INFERENCE_STACK_SIZE);
+static struct k_thread ei_inference_thread_data;
+static k_tid_t ei_inference_thread_id;
 
 typedef enum {
     INFERENCE_STATE_RUNNING,
@@ -66,7 +72,7 @@ bool ei_samples_callback(const void *raw_sample, uint32_t raw_sample_size)
         if (samples_wr_index > EI_CLASSIFIER_DSP_INPUT_FRAME_SIZE) {
             /* start from beginning of the circular buffer */
             samples_wr_index = 0;
-        }        
+        }
         if (samples_wr_index >= samples_per_inference) {
             //
             state = INFERENCE_STATE_DATA_READY;
@@ -74,30 +80,29 @@ bool ei_samples_callback(const void *raw_sample, uint32_t raw_sample_size)
         }
     }
 
-    return false;
+    return ret;
 }
 
 /**
  * @brief Inference state machine
  * @return true
  */
-bool ei_inference_sm(void)
+static void ei_inference_sm(void)
 {
-    ei_start_impulse();
-    state = INFERENCE_STATE_SAMPLING;
+    //state = INFERENCE_STATE_SAMPLING;
 
     while(INFERENCE_STATE_STOP != state) {
         switch(state){
-            case INFERENCE_STATE_SAMPLING:                
+            case INFERENCE_STATE_SAMPLING:
                 ei_fusion_inertial_read_data(EI_CLASSIFIER_RAW_SAMPLES_PER_FRAME);
                 ei_sleep(EI_CLASSIFIER_INTERVAL_MS);
                 // wait for data
                 break;
-            case INFERENCE_STATE_DATA_READY:            
+            case INFERENCE_STATE_DATA_READY:
                 // run inference, not much to do in this example
                 state = INFERENCE_STATE_RUNNING;
                 break;
-            case INFERENCE_STATE_RUNNING:                
+            case INFERENCE_STATE_RUNNING:
                 if (ei_run_inference() == false) {
                     ei_printf("ERR: Inference failed\n");
                 }
@@ -109,9 +114,17 @@ bool ei_inference_sm(void)
         }
     }
 
-    ei_stop_impulse();
+    //run_classifier_deinit(); // here or in stop after the task has ended ?
+}
 
-    return state;
+static void ei_inference_task(void *arg1, void *arg2, void *arg3)
+{
+    ARG_UNUSED(arg1);
+    ARG_UNUSED(arg2);
+    ARG_UNUSED(arg3);
+
+    ei_inference_sm();
+    ei_inference_thread_id = NULL;
 }
 
 /**
@@ -153,8 +166,12 @@ static bool ei_run_inference(void)
  * @brief Start inference process
  * @return true if successful
  */
-static bool ei_start_impulse(void)
+bool ei_start_impulse(bool cont, bool debug)
 {
+    if (ei_inference_thread_id != NULL) {
+        return true;
+    }
+
     ei_printf("Edge Impulse start inferencing on Zephyr\n");
 
     ei_printf("Inferencing settings:\n");
@@ -169,6 +186,19 @@ static bool ei_start_impulse(void)
 
     samples_wr_index = 0;
     samples_per_inference = EI_CLASSIFIER_RAW_SAMPLE_COUNT * EI_CLASSIFIER_RAW_SAMPLES_PER_FRAME;
+    state = INFERENCE_STATE_SAMPLING;
+
+    ei_inference_thread_id = k_thread_create(&ei_inference_thread_data,
+                                             ei_inference_stack,
+                                             K_THREAD_STACK_SIZEOF(ei_inference_stack),
+                                             ei_inference_task,
+                                             NULL,
+                                             NULL,
+                                             NULL,
+                                             EI_INFERENCE_PRIORITY,
+                                             0,
+                                             K_NO_WAIT);
+    k_thread_name_set(ei_inference_thread_id, "ei_inference");
 
     return true;
 }
@@ -177,10 +207,24 @@ static bool ei_start_impulse(void)
  * @brief Stop inference process
  * @return true if successful
  */
-static bool ei_stop_impulse(void)
+bool ei_stop_impulse(void)
 {
+    k_tid_t thread_id = ei_inference_thread_id;
+
+    if (thread_id == NULL) {
+        return true;
+    }
+
     ei_printf("Stopping inferencing\n");
     state = INFERENCE_STATE_STOP;
+
+    if (k_current_get() != thread_id) {
+        k_wakeup(thread_id);
+        (void)k_thread_join(&ei_inference_thread_data, K_FOREVER);
+        ei_inference_thread_id = NULL;
+    }
+
+    run_classifier_deinit(); // here or in sm ?
 
     return true;
 }

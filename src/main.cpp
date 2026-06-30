@@ -34,17 +34,25 @@
 
 #include <zephyr/kernel.h>
 #include "sensors/ei_inertial.h"
-#include "inference/inferencing.h"
+#include "msg_handler/msg_handler.h"
+#include "ei_loop.h"
 #include <stdio.h>
+
 
 int main(void)
 {
     // This is needed so that output of printf is output immediately without buffering
     setvbuf(stdout, NULL, _IONBF, 0);
 
+    // Init main loop and peripherals
+    ei_loop_init();
+
     ei_inertial_init();
 
-    ei_inference_sm(); // run state machine
+    msg_handler_init();
+
+    // Start the main loop
+    ei_loop();
 
     return 0;
 }

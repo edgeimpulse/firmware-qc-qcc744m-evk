@@ -41,9 +41,8 @@
 extern "C" {
 #endif
 
-extern bool ei_inference_sm(void);
-extern bool ei_start_inference(void);
-extern bool ei_stop_inference(void);
+extern bool ei_start_impulse(bool cont = false, bool debug = false);
+extern bool ei_stop_impulse(void);
 extern bool ei_samples_callback(const void *raw_sample, uint32_t raw_sample_size);
 
 #ifdef __cplusplus

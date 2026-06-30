@@ -1,0 +1,93 @@
+#include <zephyr/kernel.h>
+#include <zephyr/sys/atomic.h>
+#include <zephyr/sys/util.h>
+#include "edge-impulse-sdk/porting/ei_classifier_porting.h"
+#include "ei_loop.h"
+
+#include "inference/inferencing.h"
+
+#define EI_STATE_CHANGED_EVENT BIT(0)
+
+static atomic_t g_app_state = ATOMIC_INIT(EI_APP_STATE_IDLE);
+static struct k_event g_state_event;
+
+/**
+ * Set the application state.
+ */
+void ei_set_app_state(enum ei_app_state new_state)
+{
+    atomic_set(&g_app_state, (atomic_val_t)new_state);
+    k_event_post(&g_state_event, EI_STATE_CHANGED_EVENT);
+}
+
+/**
+ * Get the current application state.
+ */
+ei_app_state_t ei_get_app_state(void)
+{
+    return (ei_app_state_t)atomic_get(&g_app_state);
+}
+
+/**
+ * Initialize the main loop and state event.
+ */
+void ei_loop_init(void)
+{
+    k_event_init(&g_state_event);
+    k_event_post(&g_state_event, EI_STATE_CHANGED_EVENT);
+}
+
+/**
+ * Main loop of the application.
+ */
+void ei_loop(void)
+{
+    ei_printf("Edge Impulse Zephyr SDK QCC744x EVK\n");
+
+    while (1) {
+        k_event_wait(&g_state_event, EI_STATE_CHANGED_EVENT, true, K_FOREVER);
+
+        switch ((enum ei_app_state)atomic_get(&g_app_state)) {
+        case EI_APP_STATE_IDLE:
+            ei_printf("state: IDLE\n");
+            break;
+        case EI_APP_STATE_RUN_INFERENCE:
+            if (ei_start_impulse()) {
+                ei_printf("state: RUN INFERENCE\n");
+            }
+            else {
+                ei_printf("ERR: Failed to start inference\n");
+            }
+            break;
+        case EI_APP_STATE_RUN_INFERENCE_CONT:
+            if (ei_start_impulse(true)) {
+                ei_printf("state: RUN INFERENCE CONT\n");
+            }
+            else {
+                ei_printf("ERR: Failed to start inference\n");
+            }
+            break;
+        case EI_APP_STATE_RUN_INFERENCE_DEBUG:
+            if (ei_start_impulse(false, true)) {
+                ei_printf("state: RUN INFERENCE DEBUG\n");
+            }
+            else {
+                ei_printf("ERR: Failed to start inference\n");
+            }
+            break;
+        case EI_APP_STATE_STOP_INFERENCE:
+            ei_printf("state: STOP INFERENCE\n");
+            ei_stop_impulse();
+            break;
+        case EI_APP_STATE_RUN_DATA_FWD:
+            ei_printf("state: RUN DATA FORWARD\n");
+            break;
+        case EI_APP_STATE_STOP_DATA_FWD:
+            ei_printf("state: STOP DATA FORWARD\n");
+            break;
+        default:
+            ei_printf("state: UNKNOWN\n");
+            break;
+        }
+    }
+}

@@ -53,13 +53,14 @@ SCL <-> GPIO24
 west build --pristine -b qcc744m_evk
 ```
 
-```
-
 ## Flash
 
 ```bash
 west flash
 ```
+
+Connect to the "usually" second serial port avialalbe.
+Press left button, press the right button, release left, then release right.
 
 ## Sensors Supported
 Right now only [arduino modulino movement](https://docs.zephyrproject.org/latest/boards/shields/arduino_modulino_movement/doc/index.html) is supported.
