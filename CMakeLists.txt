@@ -22,6 +22,9 @@ set(INCLUDES
 include_directories(${INCLUDES})
 
 # add all sources to the project
-target_sources(app PRIVATE src/main.cpp)
+target_sources(app PRIVATE src/main.cpp src/ei_loop.cpp)
 target_sources(app PRIVATE src/sensors/ei_inertial.cpp)
+#target_sources(app PRIVATE src/sensors/ei_mic.cpp)
 target_sources(app PRIVATE src/inference/inferencing.cpp)
+#target_sources(app PRIVATE src/data-fwd/data_fw.cpp)
+target_sources(app PRIVATE src/msg_handler/msg_handler.cpp)
