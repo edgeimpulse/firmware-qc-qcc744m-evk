@@ -31,6 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
 #include <zephyr/kernel.h>
 #include "inference/inferencing.h"
 #include "edge-impulse-sdk/classifier/ei_run_classifier.h"
