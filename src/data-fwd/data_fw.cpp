@@ -48,14 +48,16 @@ K_THREAD_STACK_DEFINE(data_fw_stack, DATA_FW_STACK_SIZE);
 static struct k_thread data_fw_thread_data;
 static k_tid_t data_fw_thread_id;
 static bool data_fw_run = false;
-static struct k_timer data_fw_timer;
-static struct k_sem data_fw_tick_sem;
+
+K_SEM_DEFINE(data_fw_tick_sem, 0, 1);
 
 static void data_fw_timer_handler(struct k_timer *timer)
 {
 	ARG_UNUSED(timer);
 	k_sem_give(&data_fw_tick_sem);
 }
+
+K_TIMER_DEFINE(data_fw_timer, data_fw_timer_handler, NULL);
 
 /**
  * @brief Data forwarding task
@@ -86,8 +88,6 @@ static void data_fw_task(void *arg1, void *arg2, void *arg3)
         } else {
             printk("Inertial sensor not present or failed to read data\n");
         }
-
-		// Your data forwarding logic here
 	}
 
 	data_fw_thread_id = NULL;
@@ -102,9 +102,6 @@ bool data_fw_init(void)
 		return false;
 	}
 
-	k_sem_init(&data_fw_tick_sem, 0, 1);
-	k_timer_init(&data_fw_timer, data_fw_timer_handler, NULL);
-
 	data_fw_run = true;
 	data_fw_thread_id = k_thread_create(&data_fw_thread_data,
 									data_fw_stack,
@@ -118,6 +115,7 @@ bool data_fw_init(void)
 									K_NO_WAIT);
 	k_thread_name_set(data_fw_thread_id, "data_fw");
 	k_timer_start(&data_fw_timer, K_MSEC(DATA_FW_PERIOD_MS), K_MSEC(DATA_FW_PERIOD_MS));
+	k_sem_reset(&data_fw_tick_sem);	// ensure it is empty before starting the task
 
 	return true;
 }
