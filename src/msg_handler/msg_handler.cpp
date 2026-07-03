@@ -53,6 +53,8 @@ enum msg_handler_cmd {
 	MSG_HANDLER_CMD_START_IMPULSE_CONT,
 	MSG_HANDLER_CMD_START_IMPULSE_DEBUG,
 	MSG_HANDLER_CMD_STOP_IMPULSE,
+	MSG_HANDLER_CMD_START_DATA_FWD,
+	MSG_HANDLER_CMD_STOP_DATA_FWD
 };
 
 K_THREAD_STACK_DEFINE(msg_handler_stack, MSG_HANDLER_STACK_SIZE);
@@ -131,8 +133,12 @@ static enum msg_handler_cmd msg_handler_decode_cmd(const char *line)
 		return MSG_HANDLER_CMD_START_IMPULSE_DEBUG;
 	}
 
-	if (strcmp(cmd, MSG_STOP_IMPULSE) == 0) {
-		return MSG_HANDLER_CMD_STOP_IMPULSE;
+	if (strcmp(cmd, MSG_START_DATA_FWD) == 0) {
+		return MSG_HANDLER_CMD_START_DATA_FWD;
+	}
+
+	if (strcmp(cmd, MSG_STOP_DATA_FWD) == 0) {
+		return MSG_HANDLER_CMD_STOP_DATA_FWD;
 	}
 
 	return MSG_HANDLER_CMD_UNKNOWN;
@@ -158,6 +164,12 @@ static void msg_handler_process_line(const char *line)
 			break;
 		case MSG_HANDLER_CMD_STOP_IMPULSE:
 			ei_set_app_state(EI_APP_STATE_STOP_INFERENCE);
+			break;
+		case MSG_HANDLER_CMD_START_DATA_FWD:
+			ei_set_app_state(EI_APP_STATE_RUN_DATA_FWD);
+			break;
+		case MSG_HANDLER_CMD_STOP_DATA_FWD:
+			ei_set_app_state(EI_APP_STATE_STOP_DATA_FWD);
 			break;
 		default:
 			ei_printf("ERR: Unknown command: %s\n", line);
