@@ -1,0 +1,7 @@
+source "Kconfig.zephyr"
+
+config SAMPLING_FREQUENCY_HZ
+  int "sampling frequency in Hz"
+  default 50
+	help
+	  Sampling frequency in Hz for the sensor.
