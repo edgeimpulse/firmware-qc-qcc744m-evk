@@ -7,11 +7,38 @@
 	aliases {
 		accel0 = &arduino_modulino_movement;
 	};
+
+	zephyr,user {
+		io-channels = <&adc0 0>;
+	};
+};
+
+&pinctrl {
+	adc0_default: adc0_default {
+		group1 {
+			pinmux = <GPIO20_ADC_CH0>;
+		};
+	};
 };
 
 &i2c0 {
 	arduino_modulino_movement: arduino-modulino-movement@6a {
 		compatible = "st,lsm6dso";
 		reg = <0x6a>;
+	};
+};
+
+&adc0 {
+	status = "okay";
+	pinctrl-0 = <&adc0_default>;
+	pinctrl-names = "default";
+
+	channel@0 {
+		reg = <0>;
+		zephyr,gain = "ADC_GAIN_1";
+		zephyr,reference = "ADC_REF_INTERNAL";
+		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+		zephyr,resolution = <16>;
+		zephyr,input-positive = <0>;
 	};
 };
