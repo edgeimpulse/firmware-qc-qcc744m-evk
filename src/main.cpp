@@ -50,18 +50,6 @@ int main(void)
 
     ei_inertial_init();
     ei_adc_init();
-    uint16_t raw_value;
-
-    while (1) {
-        if (ei_adc_read(&raw_value) == false) {
-            printf("ADC read failed\n");
-        } else {
-            printf("ADC raw value: %d\n", raw_value);
-        }
-
-        k_sleep(K_MSEC(1000));
-    }
-
     msg_handler_init();
 
     // Start the main loop
