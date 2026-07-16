@@ -42,13 +42,9 @@
 
 LOG_MODULE_REGISTER(ei_adc, CONFIG_ADC_LOG_LEVEL);
 
-#define EI_ADC_NODE DT_NODELABEL(adc0)
-//#define EI_ADC_NODE DT_ALIAS(adc0)
-#define EI_ADC_CHANNEL_ID 0
-#define EI_ADC_INPUT_POSITIVE 0
-#define EI_ADC_RESOLUTION 12
+#define EI_ADC_NODE DT_PATH(zephyr_user)
 
-static const struct device *const adc_dev = DEVICE_DT_GET(EI_ADC_NODE);
+static const struct adc_dt_spec adc_channel = ADC_DT_SPEC_GET_BY_IDX(EI_ADC_NODE, 0);
 
 static bool adc_ready = false;
 
@@ -58,22 +54,13 @@ bool ei_adc_init(void)
         return true;
     }
 
-	if (!device_is_ready(adc_dev)) {
+	if (!adc_is_ready_dt(&adc_channel)) {
 		printk("ADC device is not ready");
 		return false;
 	}
 
-	struct adc_channel_cfg channel_cfg = {};
-
-	channel_cfg.gain = ADC_GAIN_1;
-	channel_cfg.reference = ADC_REF_INTERNAL;
-	channel_cfg.acquisition_time = ADC_ACQ_TIME_DEFAULT;
-	channel_cfg.channel_id = EI_ADC_CHANNEL_ID;
-	channel_cfg.differential = 0;
-	channel_cfg.input_positive = EI_ADC_INPUT_POSITIVE;
-
-	if (adc_channel_setup(adc_dev, &channel_cfg) != 0) {
-		printk("adc_channel_setup failed\n");
+	if (adc_channel_setup_dt(&adc_channel) != 0) {
+		printk("adc_channel_setup_dt failed\n");
 		return false;
 	}
 
@@ -95,12 +82,15 @@ bool ei_adc_read(uint16_t *raw_value)
 	uint16_t sample_buffer = 0;
 	struct adc_sequence sequence = {};
 
-	sequence.channels = BIT(EI_ADC_CHANNEL_ID);
 	sequence.buffer = &sample_buffer;
 	sequence.buffer_size = sizeof(sample_buffer);
-	sequence.resolution = EI_ADC_RESOLUTION;
 
-	if (adc_read(adc_dev, &sequence) != 0) {
+	if (adc_sequence_init_dt(&adc_channel, &sequence) != 0) {
+		printk("adc_sequence_init_dt failed\n");
+		return false;
+	}
+
+	if (adc_read(adc_channel.dev, &sequence) != 0) {
 		printk("adc_read failed\n");
 		return false;
 	}
