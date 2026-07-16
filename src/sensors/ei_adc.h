@@ -44,6 +44,7 @@ extern "C" {
 
 bool ei_adc_init(void);
 bool ei_adc_read(uint16_t *raw_value);
+bool ei_adc_read_data_fwd(float* adc_data);
 
 #ifdef __cplusplus
 }

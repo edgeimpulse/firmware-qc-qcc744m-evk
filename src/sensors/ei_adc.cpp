@@ -99,3 +99,18 @@ bool ei_adc_read(uint16_t *raw_value)
 
 	return true;
 }
+
+bool ei_adc_read_data_fwd(float* adc_data)
+{
+    if (adc_data == NULL) {
+        return false;
+    }
+
+    uint16_t raw_value;
+    if (!ei_adc_read(&raw_value)) {
+        return false;
+    }
+
+    *adc_data = (float)raw_value;
+    return true;
+}

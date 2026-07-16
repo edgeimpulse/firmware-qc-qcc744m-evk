@@ -41,6 +41,8 @@ extern "C" {
 
 bool data_fw_init(void);
 bool data_fw_deinit(void);
+void data_fw_set_sensor(int8_t sensor_idx);
+void data_fw_get_sensor_list(void);
 
 #ifdef __cplusplus
 }
