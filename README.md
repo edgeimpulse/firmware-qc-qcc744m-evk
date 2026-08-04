@@ -1,10 +1,16 @@
 # Firmware QC QCC744M-EVK
 Firmware for the [QC QCC744M-EVK](https://docs.qualcomm.com/bundle/publicresource/topics/80-WL740-250/landingpage.html) board.
 
+## Zephyr support
+
+The QCC744M EVK is supported upstream in Zephyr as the `qcc744m_evk` board (board qualifier `bl618m05q2i`). See the [Zephyr `qcc744m_evk` board documentation](https://docs.zephyrproject.org/latest/boards/qcom/qcc744m_evk/doc/index.html).
+
+Edge Impulse on-device inferencing is provided by our [Edge Impulse SDK for Zephyr](https://github.com/edgeimpulse/edge-impulse-sdk-zephyr) module, which is pulled in automatically by `west update` (see [`west.yml`](west.yml)).
+
 ## Initialize This Repo
 
 ```bash
-west init https://github.com/edgeimpulse/firmware-qc-qcc744m-evk.git
+west init -m https://github.com/edgeimpulse/firmware-qc-qcc744m-evk
 cd firmware-qc-qcc744m-evk
 west update
 ```
@@ -49,7 +55,7 @@ When in data formwarder mode, you can use [edge-impulse-data-forwarder](https://
 ## Supported shield
 
 ### Arduino modulino movement
-[Arduino Modulino movement](thttps://docs.zephyrproject.org/latest/boards/shields/arduino_modulino_movement/doc/index.html)
+[Arduino Modulino movement](https://docs.zephyrproject.org/latest/boards/shields/arduino_modulino_movement/doc/index.html)
 
 How to connect:
 Modulino <->QCC EVK
@@ -71,7 +77,7 @@ west build -b qcc744m_evk
 ```
 
 ## Flash
-Refer to [Programming and Debugging](/https://docs.zephyrproject.org/latest/boards/qcom/qcc744m_evk/doc/index.html#programming-and-debugging) on how to flash and debug the board.
+Refer to [Programming and Debugging](https://docs.zephyrproject.org/latest/boards/qcom/qcc744m_evk/doc/index.html#programming-and-debugging) on how to flash and debug the board.
 
 
 ## Sensors Supported
