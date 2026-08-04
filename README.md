@@ -77,7 +77,30 @@ west build -b qcc744m_evk
 ```
 
 ## Flash
-Refer to [Programming and Debugging](https://docs.zephyrproject.org/latest/boards/qcom/qcc744m_evk/doc/index.html#programming-and-debugging) on how to flash and debug the board.
+
+`west flash` uses the cross-platform [`bflb-mcu-tool`](https://pypi.org/project/bflb-mcu-tool/) programmer to flash over UART, so it works on macOS, Linux, and Windows with no vendor GUI or platform-specific executable.
+
+Install the programmer (the `standard-telnetlib` backport is only needed on Python 3.13+, where `telnetlib` was removed from the standard library):
+
+```bash
+pip install bflb-mcu-tool standard-telnetlib
+```
+
+Put the board in flash mode — hold **BOOT** (left), press and release **RESET** (right), then release **BOOT** — and flash:
+
+```bash
+west flash --dev-id <serial-port>
+```
+
+Or call the programmer directly:
+
+```bash
+bflb-mcu-tool --chipname bl616 --interface uart --port <serial-port> --baudrate 2000000 --firmware build/zephyr/zephyr.bin
+```
+
+Replace `<serial-port>` with your board's port (`/dev/cu.usbmodem*` on macOS, `/dev/ttyACM*` on Linux, `COMx` on Windows). The tool programs a complete image (bootloader, partition table, and application) in one step. Press **RESET** to boot the firmware.
+
+See the [Zephyr board documentation](https://docs.zephyrproject.org/latest/boards/qcom/qcc744m_evk/doc/index.html#programming-and-debugging) for more details, including the optional Windows-only QConn Flash GUI.
 
 
 ## Sensors Supported
