@@ -1,0 +1,20 @@
+[param]
+interface_type = "Uart"
+comport_uart = "/dev/tty.usbmodemBC71A1ABCD3"
+chip = "QCC743"
+chip_name = "qcc743"
+chip_type = "qcc743"
+speed_uart = "2000000"
+speed_jlink = "1000"
+erase = 1
+skip_mode = "0x0, 0x0"
+boot2_isp_mode = 0
+pre_program = ""
+pre_program_args = ""
+
+[check_box]
+efuse = false
+
+[input_path]
+efuse = ""
+config = ""

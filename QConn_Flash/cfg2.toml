@@ -1,0 +1,21 @@
+cmd = ""
+len = ""
+val = ""
+start_addr = ""
+end_addr = ""
+whole_chip = false
+
+[param]
+interface_type = "Uart"
+comport_uart = "/dev/tty.usbmodemBC71A1ABCD3"
+chip = "QCC743"
+chip_name = "qcc743"
+chip_type = "qcc743"
+speed_uart = "2000000"
+speed_jlink = "1000"
+pre_program = ""
+pre_program_args = ""
+
+[single]
+addr = "0x2000"
+path = "/Users/francescovarani/work/edge_impulse/zephyrproject/test-sdk/firmware-qc-qcc744m-evk/build/zephyr/zephyr.bin"

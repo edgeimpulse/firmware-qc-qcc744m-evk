@@ -1,0 +1,51 @@
+{
+    // Source-level debug of the QCC744M EVK (BL618) over the onboard CH347 JTAG.
+    //
+    // Flash first (./flash.sh); these configs ATTACH to the running image (no
+    // 'load'). The ELF path uses ${workspaceFolder} so it follows the currently
+    // opened project folder. Adjust "program"/"executable" if you build
+    // somewhere else.
+    //
+    // Primary config uses the Microsoft C/C++ extension (cppdbg): reliable with
+    // the RISC-V GDB, and it drives the OpenOCD started by the tasks.json task.
+    // The cortex-debug variant is an alternative that manages OpenOCD itself.
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "QCC744M: Debug (OpenOCD + GDB)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/zephyr/zephyr.elf",
+            "cwd": "${workspaceFolder}",
+            "MIMode": "gdb",
+            "miDebuggerPath": "riscv64-zephyr-elf-gdb",
+            "miDebuggerServerAddress": "localhost:3333",
+            "stopAtConnect": true,
+            "preLaunchTask": "build + openocd (qcc744m)",
+            "postDebugTask": "openocd-stop",
+            "setupCommands": [
+                { "text": "set print asm-demangle on" },
+                { "text": "set print pretty on" }
+            ],
+            "postRemoteConnectCommands": [
+                { "text": "monitor reset halt" },
+                { "text": "tbreak main" }
+            ]
+        },
+        {
+            "name": "QCC744M: cortex-debug (Zephyr SDK OpenOCD from PATH)",
+            "type": "cortex-debug",
+            "request": "launch",
+            "servertype": "openocd",
+            "cwd": "${workspaceFolder}",
+            "executable": "${workspaceFolder}/build/zephyr/zephyr.elf",
+            "serverpath": "openocd",
+            "searchDir": ["${env:OPENOCD_SCRIPTS}"],
+            "configFiles": ["${workspaceFolder}/interface/cmsis-dap.cfg", "${workspaceFolder}/target/bl616.cfg"],
+            "gdbPath": "riscv64-zephyr-elf-gdb",
+            "runToEntryPoint": "main",
+            "preLaunchTask": "west build (qcc744m)",
+            "showDevDebugOutput": "none"
+        }
+    ]
+}

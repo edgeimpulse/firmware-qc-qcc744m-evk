@@ -1,0 +1,7 @@
+# WCH CH347 (VID 1a86 PID 55de): UART+SPI+I2C+JTAG combo bridge.
+# The JTAG interface is accessed as a raw USB device by OpenOCD, so grant the
+# plugdev group access to the usb node (not just the tty). Install with:
+#   sudo cp 99-ch347-jtag.rules /etc/udev/rules.d/
+#   sudo udevadm control --reload-rules && sudo udevadm trigger
+# then replug the EVK's USB cable.
+SUBSYSTEM=="usb", ATTR{idVendor}=="1a86", ATTR{idProduct}=="55de", MODE="0664", GROUP="plugdev"
