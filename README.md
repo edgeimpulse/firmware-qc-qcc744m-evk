@@ -1,10 +1,16 @@
 # Firmware QC QCC744M-EVK
 Firmware for the [QC QCC744M-EVK](https://docs.qualcomm.com/bundle/publicresource/topics/80-WL740-250/landingpage.html) board.
 
+## Zephyr support
+
+The QCC744M EVK is supported upstream in Zephyr as the `qcc744m_evk` board (board qualifier `bl618m05q2i`). See the [Zephyr `qcc744m_evk` board documentation](https://docs.zephyrproject.org/latest/boards/qcom/qcc744m_evk/doc/index.html).
+
+Edge Impulse on-device inferencing is provided by our [Edge Impulse SDK for Zephyr](https://github.com/edgeimpulse/edge-impulse-sdk-zephyr) module, which is pulled in automatically by `west update` (see [`west.yml`](west.yml)).
+
 ## Initialize This Repo
 
 ```bash
-west init https://github.com/edgeimpulse/firmware-qc-qcc744m-evk.git
+west init -m https://github.com/edgeimpulse/firmware-qc-qcc744m-evk
 cd firmware-qc-qcc744m-evk
 west update
 ```
@@ -49,7 +55,7 @@ When in data formwarder mode, you can use [edge-impulse-data-forwarder](https://
 ## Supported shield
 
 ### Arduino modulino movement
-[Arduino Modulino movement](thttps://docs.zephyrproject.org/latest/boards/shields/arduino_modulino_movement/doc/index.html)
+[Arduino Modulino movement](https://docs.zephyrproject.org/latest/boards/shields/arduino_modulino_movement/doc/index.html)
 
 How to connect:
 Modulino <->QCC EVK
@@ -71,7 +77,30 @@ west build -b qcc744m_evk
 ```
 
 ## Flash
-Refer to [Programming and Debugging](/https://docs.zephyrproject.org/latest/boards/qcom/qcc744m_evk/doc/index.html#programming-and-debugging) on how to flash and debug the board.
+
+`west flash` uses the cross-platform [`bflb-mcu-tool`](https://pypi.org/project/bflb-mcu-tool/) programmer to flash over UART, so it works on macOS, Linux, and Windows with no vendor GUI or platform-specific executable.
+
+Install the programmer (the `standard-telnetlib` backport is only needed on Python 3.13+, where `telnetlib` was removed from the standard library):
+
+```bash
+pip install bflb-mcu-tool standard-telnetlib
+```
+
+Put the board in flash mode — hold **BOOT** (left), press and release **RESET** (right), then release **BOOT** — and flash:
+
+```bash
+west flash --dev-id <serial-port>
+```
+
+Or call the programmer directly:
+
+```bash
+bflb-mcu-tool --chipname bl616 --interface uart --port <serial-port> --baudrate 2000000 --firmware build/zephyr/zephyr.bin
+```
+
+Replace `<serial-port>` with your board's port (`/dev/cu.usbmodem*` on macOS, `/dev/ttyACM*` on Linux, `COMx` on Windows). The tool programs a complete image (bootloader, partition table, and application) in one step. Press **RESET** to boot the firmware.
+
+See the [Zephyr board documentation](https://docs.zephyrproject.org/latest/boards/qcom/qcc744m_evk/doc/index.html#programming-and-debugging) for more details, including the optional Windows-only QConn Flash GUI.
 
 
 ## Sensors Supported
