@@ -1,9 +1,0 @@
-manifest:
-
-  projects:
-    - name: edge-impulse-sdk-zephyr
-      description: Edge Impulse SDK for Zephyr
-      path: modules/edge-impulse-sdk-zephyr
-      west-commands: west/west-commands.yml
-      revision: v1.93.7
-      url: https://github.com/edgeimpulse/edge-impulse-sdk-zephyr
