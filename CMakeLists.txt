@@ -21,11 +21,26 @@ set(INCLUDES
     )
 include_directories(${INCLUDES})
 
+# --- DSP / inference performance -------------------------------------------
+if(TARGET edge-impulse-sdk)
+    get_target_property(_ei_srcs edge-impulse-sdk SOURCES)
+    get_target_property(_ei_dir  edge-impulse-sdk SOURCE_DIR)
+    set_source_files_properties(
+        ${_ei_srcs}
+        DIRECTORY ${_ei_dir}
+        PROPERTIES COMPILE_OPTIONS
+        # -fsingle-precision-constant: unsuffixed FP literals (2.0, 0.5, M_PI)
+        # stay 'float' instead of promoting neighbouring math to soft-float double
+        # (no hardware double on the E907 / -mabi=ilp32f).
+        "-O3;-funroll-loops;-fno-math-errno;-ffp-contract=fast;-ffast-math;-fsingle-precision-constant")
+endif()
+
 # add all sources to the project
 target_sources(app PRIVATE src/main.cpp src/ei_loop.cpp)
 target_sources(app PRIVATE src/sensors/ei_inertial.cpp)
 target_sources(app PRIVATE src/sensors/ei_adc.cpp)
-#target_sources(app PRIVATE src/sensors/ei_mic.cpp)
-target_sources(app PRIVATE src/inference/inferencing.cpp)
+target_sources(app PRIVATE src/sensors/ei_pixels.cpp)
+# Sensor-specific inference; each file compiles only for its EI_CLASSIFIER_SENSOR
+target_sources(app PRIVATE src/inference/imu_inferencing.cpp)
 target_sources(app PRIVATE src/data-fwd/data_fw.cpp)
 target_sources(app PRIVATE src/msg_handler/msg_handler.cpp)

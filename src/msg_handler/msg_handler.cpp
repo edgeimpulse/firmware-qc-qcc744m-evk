@@ -54,7 +54,7 @@ enum msg_handler_cmd {
 	MSG_HANDLER_CMD_START_IMPULSE_DEBUG,
 	MSG_HANDLER_CMD_STOP_IMPULSE,
 	MSG_HANDLER_CMD_START_DATA_FWD,
-	MSG_HANDLER_CMD_STOP_DATA_FWD
+	MSG_HANDLER_CMD_STOP_DATA_FWD,
 };
 
 K_THREAD_STACK_DEFINE(msg_handler_stack, MSG_HANDLER_STACK_SIZE);
@@ -78,11 +78,11 @@ static void msg_handler_uart_isr(const struct device *dev, void *user_data)
 			break;
 		}
 
-		if (c == '\r') {
-			continue;
-		}
+		//if (c == '\r') {
+		//	continue;
+		//}
 
-		if (c == '\n') {
+		if (c == '\r') {
 			msg_handler_isr_line[msg_handler_isr_idx] = '\0';
 			(void)k_msgq_put(&msg_handler_rx_queue, msg_handler_isr_line, K_NO_WAIT);
 			msg_handler_isr_idx = 0U;
@@ -198,10 +198,11 @@ void msg_handler_task(void *arg1, void *arg2, void *arg3)
 	}
 }
 
-void msg_handler_init(void)
+bool msg_handler_init(void)
 {
 	if (!device_is_ready(msg_handler_uart)) {
-		return;
+		ei_printf("ERR: UART device not ready\n");
+		return false;
 	}
 
 	msg_handler_isr_idx = 0U;
@@ -220,4 +221,6 @@ void msg_handler_init(void)
 											0,
 											K_NO_WAIT);
 	k_thread_name_set(msg_handler_thread_id, "msg_handler");
+
+	return true;
 }

@@ -44,6 +44,8 @@ extern "C" {
 extern bool ei_start_impulse(bool cont = false, bool debug = false);
 extern bool ei_stop_impulse(void);
 extern bool ei_samples_callback(const void *raw_sample, uint32_t raw_sample_size);
+//extern void ei_run_impulse(void);
+extern bool is_inference_running(void);
 
 #ifdef __cplusplus
 }

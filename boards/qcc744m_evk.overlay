@@ -1,3 +1,4 @@
+#include <zephyr/dt-bindings/led/led.h>
 /*
  * Local QCC744M EVK sensor wiring for Arduino Modulino Movement.
  * This avoids shield label-order issues by attaching the device directly to i2c0.
@@ -25,6 +26,15 @@
 	arduino_modulino_movement: arduino-modulino-movement@6a {
 		compatible = "st,lsm6dso";
 		reg = <0x6a>;
+	};
+
+	modulino_pixels: modulino-pixels@36 {
+		compatible = "arduino,modulino-pixels";
+		reg = <0x36>;
+		chain-length = <8>;
+		color-mapping = <LED_COLOR_ID_RED
+				 LED_COLOR_ID_GREEN
+				 LED_COLOR_ID_BLUE>;
 	};
 };
 

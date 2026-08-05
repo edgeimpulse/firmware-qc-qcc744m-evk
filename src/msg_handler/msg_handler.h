@@ -52,8 +52,8 @@
 #define MSG_START_IMPULSE_DEBUG "RUNIMPULSEDEBUG"
 
 // Data fwd
-#define MSG_START_DATA_FWD       "STARTDATAFWD"
-#define MSG_STOP_DATA_FWD        "STOPDATAFWD"
+#define MSG_START_DATA_FWD      "STARTDATAFWD"
+#define MSG_STOP_DATA_FWD       "STOPDATAFWD"
 
 #define MSG_STOP_IMPULSE        "b"
 
@@ -64,7 +64,7 @@
 extern "C" {
 #endif
 
-extern void msg_handler_init(void);
+extern bool msg_handler_init(void);
 
 #ifdef __cplusplus
 }

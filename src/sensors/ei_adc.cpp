@@ -39,10 +39,13 @@
 #include <zephyr/drivers/adc.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
+#include "inference/inferencing.h"
 
 LOG_MODULE_REGISTER(ei_adc, CONFIG_ADC_LOG_LEVEL);
 
 #define EI_ADC_NODE DT_PATH(zephyr_user)
+
+static bool ei_adc_read(uint16_t *raw_value);
 
 static const struct adc_dt_spec adc_channel = ADC_DT_SPEC_GET_BY_IDX(EI_ADC_NODE, 0);
 
@@ -68,7 +71,7 @@ bool ei_adc_init(void)
 	return true;
 }
 
-bool ei_adc_read(uint16_t *raw_value)
+static bool ei_adc_read(uint16_t *raw_value)
 {
 	if (raw_value == NULL) {
 		return false;
@@ -112,5 +115,26 @@ bool ei_adc_read_data_fwd(float* adc_data)
     }
 
     *adc_data = (float)raw_value;
+    return true;
+}
+
+/**
+ * 
+ */
+bool ei_adc_read_data(int n_samples)
+{
+	static float adc;
+
+	adc = 0.0;
+
+	uint16_t raw_value;
+    if (!ei_adc_read(&raw_value)) {
+        return false;
+    }
+
+    adc = (float)raw_value;
+
+	ei_samples_callback(&adc, 1 * sizeof(float));
+
     return true;
 }
