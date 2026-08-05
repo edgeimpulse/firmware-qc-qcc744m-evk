@@ -60,20 +60,6 @@ int main(void)
 
     ei_pixels_set_color(EI_PIXELS_ALL, 0x00, 0x00, 0x00); // Turn off all pixels
 
-#if 0
-    uint16_t raw_value;
-
-    while (1) {
-        if (ei_adc_read(&raw_value) == false) {
-            printf("ADC read failed\n");
-        } else {
-            printf("ADC raw value: %d\n", raw_value);
-        }
-
-        k_sleep(K_MSEC(1000));
-    }
-#endif
-
     if (msg_handler_init() == false) {
         printf("Failed to init message handler\n");
         while (1)   {

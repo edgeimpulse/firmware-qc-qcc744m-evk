@@ -16,7 +16,7 @@ This fetches:
 
 ## Update the Model
 
-In Edge Impulse Studio go to:  
+In Edge Impulse Studio go to:
 **Deployment** > **Zephyr library** > **Build**
 
 Download the generated `.zip`
@@ -49,14 +49,35 @@ When in data formwarder mode, you can use [edge-impulse-data-forwarder](https://
 ## Supported shield
 
 ### Arduino modulino movement
-[Arduino Modulino movement](thttps://docs.zephyrproject.org/latest/boards/shields/arduino_modulino_movement/doc/index.html)
+[Arduino Modulino movement](https://docs.zephyrproject.org/latest/boards/shields/arduino_modulino_movement/doc/index.html)
+— LSM6DSO 6-axis IMU, I2C address `0x6a`.
 
 How to connect:
-Modulino <->QCC EVK
-GND <-> GND
-3V3 <-> VDD_3V3
-SDA <-> GPIO23
-SCL <-> GPIO24
+```
+Modulino <-> QCC EVK
+GND      <-> GND
+3V3      <-> VDD_3V3
+SDA      <-> GPIO23
+SCL      <-> GPIO24
+```
+
+### Arduino modulino pixels
+[Arduino Modulino Pixels](https://docs.zephyrproject.org/latest/boards/shields/arduino_modulino_pixels/doc/index.html)
+— 8 addressable RGB LEDs on the same I2C bus, address `0x36`. Wire it to the
+same `GND / 3V3 / SDA (GPIO23) / SCL (GPIO24)` pins (daisy-chain the Qwiic
+connectors). Enabled with `CONFIG_LED_STRIP=y` and driven through
+`src/sensors/ei_pixels.{h,cpp}`:
+
+```c
+ei_pixels_init();                              // false if the board isn't found
+ei_pixels_on(EI_PIXEL(0) | EI_PIXEL(2));       // LEDs addressed by bitmask
+ei_pixels_set_color(EI_PIXELS_ALL, 0, 0x20, 0);// green on all
+ei_pixels_toggle(EI_PIXEL(1));
+ei_pixels_off(EI_PIXELS_ALL);                  // (or ei_pixels_clear())
+```
+
+LEDs are selected by a bitmask — `led0 = 1`, `led1 = 2`, `led2 = 4`, … — build
+bits with `EI_PIXEL(i)` and OR them together.
 
 ## Build
 
@@ -71,11 +92,61 @@ west build -b qcc744m_evk
 ```
 
 ## Flash
-Refer to [Programming and Debugging](/https://docs.zephyrproject.org/latest/boards/qcom/qcc744m_evk/doc/index.html#programming-and-debugging) on how to flash and debug the board.
 
+A helper script `flash.sh` wraps the vendor `QConn_Flash_Cmd` tool with the
+addresses from the [board docs](https://docs.zephyrproject.org/latest/boards/qcom/qcc744m_evk/doc/index.html#programming-and-debugging)
+(boot2 @ `0x0`, `zephyr.bin` @ `0x2000`).
+
+Put the board in **download mode** first: hold **BOOT**, tap **RESET**, release **BOOT**.
+
+```bash
+./flash.sh              # flash the app (zephyr.bin @ 0x2000) -- default
+./flash.sh --boot2      # flash only boot2 (@ 0x0), needed once per fresh board
+./flash.sh --all        # flash boot2 + app
+./flash.sh --port /dev/ttyACM0 --baud 115200
+```
+
+`boot2` only needs flashing once per board (unless its flash region is erased).
+
+### Serial console
+
+The console/AT-command port is one of the two CH347 ACM interfaces (usually
+`/dev/ttyACM1`).
+
+## Debug
+
+### VS Code
+
+`.vscode/launch.json` + `.vscode/tasks.json` provide a one-key flow. Open this
+firmware folder in VS Code, then press **F5** and pick a configuration:
+
+- **QCC744M: Debug (OpenOCD + GDB)** — uses the Microsoft **C/C++** extension
+  (`ms-vscode.cpptools`). Its `preLaunchTask` builds (`west build`) then starts
+  the gdb-server (via `debug.sh --server`), attaches, halts, and breaks at
+  `main`. OpenOCD is stopped automatically when the session ends.
+- **QCC744M: cortex-debug (OpenOCD)** — alternative using the **Cortex-Debug**
+  extension (`marus25.cortex-debug`), which manages OpenOCD itself.
+
+Build tasks are also available standalone via **Terminal → Run Build Task**
+(`west build --pristine` is the default; an incremental variant is included).
+
+> Tool paths in these files are absolute (matching `flash.sh`/`debug.sh`). If
+> your build output lives elsewhere, update `program`/`executable` to point at
+> `build/zephyr/zephyr.elf`. Launch VS Code from the activated west venv (with
+> `ZEPHYR_BASE` set) so the build tasks find `west`.
 
 ## Sensors Supported
-Right now only [arduino modulino movement](https://docs.zephyrproject.org/latest/boards/shields/arduino_modulino_movement/doc/index.html) is supported.
+
+The active sensor is chosen by the Edge Impulse model (`EI_CLASSIFIER_SENSOR`),
+so which of these feeds inference depends on the model dropped into `model/`.
+
+| Sensor        | Device                         | Bus / pins                     | Source                     |
+| ------------- | ------------------------------ | ------------------------------ | -------------------------- |
+| IMU (6-axis)  | LSM6DSO (Modulino Movement)    | I2C `0x6a`                     | `src/sensors/ei_inertial.*`|
+| ADC           | on-chip ADC channel 0          | GPIO20 (ADC_CH0)               | `src/sensors/ei_adc.*`     |
+
+Output/indicator (not a sensor): **Modulino Pixels** RGB LEDs via
+`src/sensors/ei_pixels.*` (see [Supported shield](#arduino-modulino-pixels)).
 
 ## Project Structure
 
@@ -90,7 +161,7 @@ Right now only [arduino modulino movement](https://docs.zephyrproject.org/latest
     ├── data-fw/            # Ingestion
     ├── inference/          # Inference state machine
     ├── msg_handler/        # Incoming messages
-    └── sensors/            # IMU and mic interface
+    └── sensors/            # IMU, mic, ADC, and Modulino Pixels interfaces
 ```
 
 ## Configuration

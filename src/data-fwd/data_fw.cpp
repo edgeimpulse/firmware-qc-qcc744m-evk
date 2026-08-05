@@ -187,6 +187,14 @@ void data_fw_set_sensor(int8_t sensor_idx)
 }
 
 /**
+ * @brief Toggle between available sensors for data forwarding
+ */
+void data_fw_toggle_sensor(void)
+{
+	data_fw_sensor_idx = (data_fw_sensor_idx + 1) % (sizeof(available_sensors) / sizeof(available_sensors[0]));
+}
+
+/**
  * @brief Print the list of available sensors
  */
 void data_fw_get_sensor_list(char *sensor_list, size_t max_len)

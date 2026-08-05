@@ -1,3 +1,4 @@
+#include <zephyr/dt-bindings/input/input-event-codes.h>
 #include <zephyr/dt-bindings/led/led.h>
 /*
  * Local QCC744M EVK sensor wiring for Arduino Modulino Movement.
@@ -36,6 +37,7 @@
 				 LED_COLOR_ID_GREEN
 				 LED_COLOR_ID_BLUE>;
 	};
+
 };
 
 &adc0 {
