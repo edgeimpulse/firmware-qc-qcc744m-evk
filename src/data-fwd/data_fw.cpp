@@ -1,6 +1,6 @@
 /* The Clear BSD License
  *
- * Copyright (c) 2025 EdgeImpulse Inc.
+ * Copyright (c) 2026 EdgeImpulse Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
