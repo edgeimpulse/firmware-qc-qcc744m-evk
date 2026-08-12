@@ -40,6 +40,7 @@ target_sources(app PRIVATE src/main.cpp src/ei_loop.cpp)
 target_sources(app PRIVATE src/sensors/ei_inertial.cpp)
 target_sources(app PRIVATE src/sensors/ei_adc.cpp)
 target_sources(app PRIVATE src/sensors/ei_pixels.cpp)
+target_sources(app PRIVATE src/sensors/ei_buttons.cpp)
 # Sensor-specific inference; each file compiles only for its EI_CLASSIFIER_SENSOR
 target_sources(app PRIVATE src/inference/imu_inferencing.cpp)
 target_sources(app PRIVATE src/data-fwd/data_fw.cpp)

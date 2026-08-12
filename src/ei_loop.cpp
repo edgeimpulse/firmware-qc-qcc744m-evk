@@ -44,7 +44,8 @@
 #define EI_STATE_CHANGED_EVENT BIT(0)
 
 static atomic_t g_app_state = ATOMIC_INIT(EI_APP_STATE_IDLE);
-static struct k_event g_state_event;
+static struct k_event g_state_event;   /* drives the main loop */
+static struct k_event g_notify_event;  /* broadcast to observers (e.g. LEDs) */
 
 /**
  * Set the application state.
@@ -53,6 +54,18 @@ void ei_set_app_state(enum ei_app_state new_state)
 {
     atomic_set(&g_app_state, (atomic_val_t)new_state);
     k_event_post(&g_state_event, EI_STATE_CHANGED_EVENT);
+    k_event_post(&g_notify_event, EI_STATE_CHANGED_EVENT);
+}
+
+/**
+ * Block until the application state changes (for observers such as a status
+ * LED). Clears the notification after waiting rather than before, so a change
+ * that lands while the observer is busy is never lost.
+ */
+void ei_state_wait_change(void)
+{
+    k_event_wait(&g_notify_event, EI_STATE_CHANGED_EVENT, false, K_FOREVER);
+    k_event_clear(&g_notify_event, EI_STATE_CHANGED_EVENT);
 }
 
 /**
@@ -69,6 +82,7 @@ ei_app_state_t ei_get_app_state(void)
 void ei_loop_init(void)
 {
     k_event_init(&g_state_event);
+    k_event_init(&g_notify_event);
     k_event_post(&g_state_event, EI_STATE_CHANGED_EVENT);
 }
 

@@ -54,6 +54,14 @@ void ei_loop(void);
 void ei_set_app_state(ei_app_state_t new_state);
 ei_app_state_t ei_get_app_state(void);
 
+/**
+ * @brief Block until the application state changes.
+ *
+ * For observers (e.g. a status-LED task) that want to react to state
+ * transitions without polling. Returns after any ei_set_app_state() call.
+ */
+void ei_state_wait_change(void);
+
 #ifdef __cplusplus
 }
 #endif

@@ -35,12 +35,10 @@
 #if defined(EI_CLASSIFIER_SENSOR) && (EI_CLASSIFIER_SENSOR == EI_CLASSIFIER_SENSOR_FUSION || EI_CLASSIFIER_SENSOR == EI_CLASSIFIER_SENSOR_ACCELEROMETER)
 
 #include <zephyr/kernel.h>
-#include <cstring>
 #include "inference/inferencing.h"
 #include "edge-impulse-sdk/classifier/ei_run_classifier.h"
 #include "edge-impulse-sdk/dsp/numpy.hpp"
 #include "sensors/ei_inertial.h"
-#include "sensors/ei_adc.h"
 
 static bool ei_run_inference(void);
 static void ei_inference_task(void *arg1, void *arg2, void *arg3);
@@ -99,15 +97,7 @@ static void ei_inference_sm(void)
     while(INFERENCE_STATE_STOP != state) {
         switch(state){
             case INFERENCE_STATE_SAMPLING:
-                if (strstr(EI_CLASSIFIER_FUSION_AXES_STRING, "accX") != nullptr ||
-                    strstr(EI_CLASSIFIER_FUSION_AXES_STRING, "accY") != nullptr ||
-                    strstr(EI_CLASSIFIER_FUSION_AXES_STRING, "accZ") != nullptr) {
-                    ei_fusion_inertial_read_data(EI_CLASSIFIER_RAW_SAMPLES_PER_FRAME);
-                }
-                else  { //else we presume it's adc
-                    ei_adc_read_data(EI_CLASSIFIER_RAW_SAMPLES_PER_FRAME);
-                }
-
+                ei_fusion_inertial_read_data(EI_CLASSIFIER_RAW_SAMPLES_PER_FRAME);
                 ei_sleep(EI_CLASSIFIER_INTERVAL_MS);
                 // wait for data
                 break;

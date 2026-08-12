@@ -49,20 +49,37 @@ K_THREAD_STACK_DEFINE(data_fw_stack, DATA_FW_STACK_SIZE);
 static struct k_thread data_fw_thread_data;
 static k_tid_t data_fw_thread_id;
 static bool data_fw_run = false;
-static int8_t data_fw_sensor_idx = 0;	// default to inertial
 
-struct sensor_list {
-	char name[32];
-	int8_t idx;
-	uint8_t axis_sampled;
-	float freq_hz;
-	bool (*read_data_fwd)(float *data);
-};
+/* Sensor streamed by the task. Only changed while the task is stopped. */
+static data_fw_sensor_t data_fw_sensor = DATA_FW_SENSOR_INERTIAL;
 
-static struct sensor_list available_sensors[] = {
-	{"Inertial", 0, INERTIAL_AXIS_SAMPLED, DATA_FW_SAMPLING_FREQUENCY_HZ, ei_inertial_read_data_fwd},
-	{"ADC", 1, 1, DATA_FW_SAMPLING_FREQUENCY_HZ, ei_adc_read_data_fwd},
-};
+static void data_fw_sample_inertial(void)
+{
+	float inertial_data[INERTIAL_AXIS_SAMPLED] = {0};
+
+	if (ei_inertial_read_data_fwd(inertial_data)) {
+		for (int i = 0; i < INERTIAL_AXIS_SAMPLED; i++) {
+			if (i != 0) {
+				printk(",");
+			}
+			printk("%.3f", inertial_data[i]);
+		}
+		printk("\n");
+	} else {
+		printk("Inertial sensor not present or failed to read data\n");
+	}
+}
+
+static void data_fw_sample_adc(void)
+{
+	uint16_t raw_value;
+
+	if (ei_adc_read(&raw_value)) {
+		printk("%u\n", raw_value);
+	} else {
+		printk("ADC not present or failed to read data\n");
+	}
+}
 
 K_SEM_DEFINE(data_fw_tick_sem, 0, 1);
 
@@ -83,30 +100,21 @@ static void data_fw_task(void *arg1, void *arg2, void *arg3)
 	ARG_UNUSED(arg2);
 	ARG_UNUSED(arg3);
 
-
-	float* inertial_data = (float*)k_malloc(available_sensors[data_fw_sensor_idx].axis_sampled * sizeof(float));
-
 	while (data_fw_run) {
-
 		k_sem_take(&data_fw_tick_sem, K_FOREVER);
 		if (!data_fw_run) {
 			break;
 		}
 
-        if (available_sensors[data_fw_sensor_idx].read_data_fwd != NULL) {
-            if (available_sensors[data_fw_sensor_idx].read_data_fwd(inertial_data)) {
-                // Data read successfully, you can process or forward the data here
-                for (int i = 0; i < available_sensors[data_fw_sensor_idx].axis_sampled; i++) {
-                    if (i != 0) {
-                        printk(",");
-                    }
-                    printk("%.3f", inertial_data[i]);
-                }
-                printk("\n");
-            } else {
-                printk("Sensor not present or failed to read data\n");
-            }
-        }
+		switch (data_fw_sensor) {
+		case DATA_FW_SENSOR_ADC:
+			data_fw_sample_adc();
+			break;
+		case DATA_FW_SENSOR_INERTIAL:
+		default:
+			data_fw_sample_inertial();
+			break;
+		}
 	}
 
 	data_fw_thread_id = NULL;
@@ -118,21 +126,6 @@ static void data_fw_task(void *arg1, void *arg2, void *arg3)
 bool data_fw_init(void)
 {
 	if (data_fw_thread_id != NULL) {
-		return false;
-	}
-
-	if (sizeof(available_sensors) / sizeof(available_sensors[0]) <= 0) {
-		printk("No available sensors to forward data from\n");
-		return false;
-	}
-
-	if (available_sensors[data_fw_sensor_idx].read_data_fwd == NULL) {
-		printk("Selected sensor does not have a data forwarding function\n");
-		return false;
-	}
-
-	if (data_fw_sensor_idx < 0 || data_fw_sensor_idx >= sizeof(available_sensors) / sizeof(available_sensors[0])) {
-		printk("Invalid sensor index\n");
 		return false;
 	}
 
@@ -148,7 +141,7 @@ bool data_fw_init(void)
 									0,
 									K_NO_WAIT);
 	k_thread_name_set(data_fw_thread_id, "data_fw");
-	k_timer_start(&data_fw_timer, K_MSEC(DATA_FW_PERIOD_MS), K_MSEC(DATA_FW_PERIOD_MS));	// it's the same for both sensors now
+	k_timer_start(&data_fw_timer, K_MSEC(DATA_FW_PERIOD_MS), K_MSEC(DATA_FW_PERIOD_MS));
 	k_sem_reset(&data_fw_tick_sem);	// ensure it is empty before starting the task
 
 	return true;
@@ -177,29 +170,35 @@ bool data_fw_deinit(void)
 	return true;
 }
 
-/**
- * @brief Set the sensor to be used for data forwarding
- * @param sensor_idx Index of the sensor to be used
- */
-void data_fw_set_sensor(int8_t sensor_idx)
+bool data_fw_is_running(void)
 {
-	data_fw_sensor_idx = sensor_idx;
+	return data_fw_thread_id != NULL;
 }
 
-/**
- * @brief Toggle between available sensors for data forwarding
- */
-void data_fw_toggle_sensor(void)
+data_fw_sensor_t data_fw_get_sensor(void)
 {
-	data_fw_sensor_idx = (data_fw_sensor_idx + 1) % (sizeof(available_sensors) / sizeof(available_sensors[0]));
+	return data_fw_sensor;
 }
 
-/**
- * @brief Print the list of available sensors
- */
-void data_fw_get_sensor_list(char *sensor_list, size_t max_len)
+data_fw_sensor_t data_fw_toggle_sensor(void)
 {
-	for (size_t i = 0; i < sizeof(available_sensors) / sizeof(available_sensors[0]); i++) {
-		printk("%d: %s %.2f\n", available_sensors[i].idx, available_sensors[i].name, available_sensors[i].freq_hz);
+	/* Don't change the source out from under a running stream. */
+	if (!data_fw_is_running()) {
+		data_fw_sensor = (data_fw_sensor_t)((data_fw_sensor + 1) %
+						    DATA_FW_SENSOR_COUNT);
+	}
+
+	return data_fw_sensor;
+}
+
+const char *data_fw_sensor_name(data_fw_sensor_t sensor)
+{
+	switch (sensor) {
+	case DATA_FW_SENSOR_INERTIAL:
+		return "inertial";
+	case DATA_FW_SENSOR_ADC:
+		return "adc";
+	default:
+		return "unknown";
 	}
 }

@@ -39,11 +39,35 @@
 extern "C" {
 #endif
 
+/* Sensors that data forwarding can stream. Only sensors with a data-forward
+ * read path are listed. */
+typedef enum {
+	DATA_FW_SENSOR_INERTIAL = 0,
+	DATA_FW_SENSOR_ADC,
+	DATA_FW_SENSOR_COUNT,
+} data_fw_sensor_t;
+
 bool data_fw_init(void);
 bool data_fw_deinit(void);
-void data_fw_set_sensor(int8_t sensor_idx);
-void data_fw_get_sensor_list(void);
-void data_fw_toggle_sensor(void);
+
+/** @return true while the data-forwarding task is running. */
+bool data_fw_is_running(void);
+
+/** @return the sensor currently selected for data forwarding. */
+data_fw_sensor_t data_fw_get_sensor(void);
+
+/**
+ * @brief Cycle to the next data-forward sensor.
+ *
+ * The selection is fixed while forwarding is running, so this is a no-op (and
+ * returns the unchanged selection) unless data forwarding is stopped.
+ *
+ * @return the selection after the call.
+ */
+data_fw_sensor_t data_fw_toggle_sensor(void);
+
+/** @return a human-readable name for @p sensor. */
+const char *data_fw_sensor_name(data_fw_sensor_t sensor);
 
 #ifdef __cplusplus
 }

@@ -38,6 +38,22 @@
 				 LED_COLOR_ID_BLUE>;
 	};
 
+	/*
+	 * Arduino Modulino Buttons (A/B/C). The generic i2c-device node holds
+	 * the bus address; the arduino,modulino-buttons child is the input
+	 * driver that polls it and reports key press/release events.
+	 */
+	modulino_buttons_dev: modulino-buttons@3e {
+		compatible = "i2c-device";
+		reg = <0x3e>;
+
+		modulino_buttons: modulino-buttons {
+			compatible = "arduino,modulino-buttons";
+			zephyr,codes = <INPUT_KEY_A>,
+				       <INPUT_KEY_B>,
+				       <INPUT_KEY_C>;
+		};
+	};
 };
 
 &adc0 {

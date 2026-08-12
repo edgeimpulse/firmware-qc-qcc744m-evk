@@ -40,6 +40,8 @@
 #include <string.h>
 
 #include "sensors/ei_pixels.h"
+#include "ei_loop.h"
+#include "data-fwd/data_fw.h"
 
 /*
  * The board is an LED strip (arduino,modulino-pixels) reached over I2C. The
@@ -162,6 +164,79 @@ bool ei_pixels_clear(void)
 	return ei_pixels_off(EI_PIXELS_ALL);
 }
 
+/*
+ * Status-indicator task: reflect the application state on the whole strip.
+ * Colours are moderate (0x20) to match the default on-colour brightness.
+ */
+
+#define EI_PIXELS_STATUS_STACK_SIZE 1024
+#define EI_PIXELS_STATUS_PRIORITY   7
+#define EI_PIXELS_STATUS_LEVEL      0x20
+
+static K_THREAD_STACK_DEFINE(ei_pixels_status_stack, EI_PIXELS_STATUS_STACK_SIZE);
+static struct k_thread ei_pixels_status_thread;
+
+/* Paint the strip for the current application state. */
+static void ei_pixels_apply_state(void)
+{
+	const uint8_t on = EI_PIXELS_STATUS_LEVEL;
+	uint8_t r, g, b;
+
+	switch (ei_get_app_state()) {
+	case EI_APP_STATE_RUN_INFERENCE:
+	case EI_APP_STATE_RUN_INFERENCE_CONT:
+	case EI_APP_STATE_RUN_INFERENCE_DEBUG:
+		/* inference running -> yellow */
+		r = on; g = on; b = 0;
+		break;
+	case EI_APP_STATE_RUN_DATA_FWD:
+		if (data_fw_get_sensor() == DATA_FW_SENSOR_ADC) {
+			/* data forward, ADC -> magenta */
+			r = on; g = 0; b = on;
+		} else {
+			/* data forward, inertial -> blue */
+			r = 0; g = 0; b = on;
+		}
+		break;
+	default:
+		/* idle (and the transient stop states) -> green */
+		r = 0; g = on; b = 0;
+		break;
+	}
+
+	ei_pixels_set_color(EI_PIXELS_ALL, r, g, b);
+}
+
+static void ei_pixels_status_task(void *p1, void *p2, void *p3)
+{
+	ARG_UNUSED(p1);
+	ARG_UNUSED(p2);
+	ARG_UNUSED(p3);
+
+	/* Show the initial (idle) state, then update on every transition. */
+	ei_pixels_apply_state();
+
+	while (1) {
+		ei_state_wait_change();
+		ei_pixels_apply_state();
+	}
+}
+
+bool ei_pixels_start_status_task(void)
+{
+	if (!ei_pixels_ready) {
+		return false;
+	}
+
+	k_thread_create(&ei_pixels_status_thread, ei_pixels_status_stack,
+			K_THREAD_STACK_SIZEOF(ei_pixels_status_stack),
+			ei_pixels_status_task, NULL, NULL, NULL,
+			EI_PIXELS_STATUS_PRIORITY, 0, K_NO_WAIT);
+	k_thread_name_set(&ei_pixels_status_thread, "ei_pixels_status");
+
+	return true;
+}
+
 #else /* !EI_PIXELS_HAS_DEVICE */
 
 bool ei_pixels_init(void)
@@ -197,6 +272,11 @@ bool ei_pixels_set_color(uint32_t mask, uint8_t r, uint8_t g, uint8_t b)
 }
 
 bool ei_pixels_clear(void)
+{
+	return false;
+}
+
+bool ei_pixels_start_status_task(void)
 {
 	return false;
 }

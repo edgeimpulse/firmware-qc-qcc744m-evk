@@ -66,18 +66,44 @@ SCL      <-> GPIO24
 — 8 addressable RGB LEDs on the same I2C bus, address `0x36`. Wire it to the
 same `GND / 3V3 / SDA (GPIO23) / SCL (GPIO24)` pins (daisy-chain the Qwiic
 connectors). Enabled with `CONFIG_LED_STRIP=y` and driven through
-`src/sensors/ei_pixels.{h,cpp}`:
+`src/sensors/ei_pixels.{h,cpp}`.
+
+LEDs are addressed by a **bitmask** — bit `i` selects LED `i`. Use `EI_PIXEL(i)`
+to build a single bit and OR several together.
 
 ```c
-ei_pixels_init();                              // false if the board isn't found
-ei_pixels_on(EI_PIXEL(0) | EI_PIXEL(2));       // LEDs addressed by bitmask
-ei_pixels_set_color(EI_PIXELS_ALL, 0, 0x20, 0);// green on all
-ei_pixels_toggle(EI_PIXEL(1));
-ei_pixels_off(EI_PIXELS_ALL);                  // (or ei_pixels_clear())
+ei_pixels_init();                               // returns false if board not found
+
+ei_pixels_on(EI_PIXEL(0) | EI_PIXEL(2));        // turn on LED 0 and LED 2
+ei_pixels_off(EI_PIXELS_ALL);                   // same as ei_pixels_clear()
+ei_pixels_toggle(EI_PIXEL(1));                  // flip LED 1
+
+ei_pixels_set_color(EI_PIXELS_ALL, 0, 0x20, 0); // set all to green (also updates on-colour)
 ```
 
-LEDs are selected by a bitmask — `led0 = 1`, `led1 = 2`, `led2 = 4`, … — build
-bits with `EI_PIXEL(i)` and OR them together.
+A **status-indicator task** (`ei_pixels_start_status_task()`) runs automatically and
+colours all 8 LEDs to reflect the application state:
+
+| State                    | Colour  |
+| ------------------------ | ------- |
+| Idle                     | Green   |
+| Inference running        | Yellow  |
+| Data forwarder — IMU     | Blue    |
+| Data forwarder — ADC     | Magenta |
+
+
+### Arduino modulino buttons
+[Arduino Modulino Buttons](https://docs.zephyrproject.org/latest/boards/shields/arduino_modulino_buttons/doc/index.html)
+— 3 buttons (A, B, C) on the same I2C bus. Wire it to the same
+`GND / 3V3 / SDA (GPIO23) / SCL (GPIO24)` pins. Enabled with the
+`arduino_modulino_buttons` shield.
+
+| Button | Action |
+| ------ | ------ |
+| **A**  | Toggle inference — press once to start, press again to stop |
+| **B**  | Toggle data forwarder — press once to start (`AT+STARTDATAFWD`), press again to stop (`AT+STOPDATAFWD`) |
+| **C**  | Cycle the active data-forwarder sensor between **IMU** and **ADC** |
+
 
 ## Build
 

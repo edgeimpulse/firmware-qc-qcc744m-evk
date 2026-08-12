@@ -43,8 +43,7 @@ extern "C" {
 #endif
 
 bool ei_adc_init(void);
-bool ei_adc_read_data_fwd(float* adc_data);
-bool ei_adc_read_data(int n_samples);
+bool ei_adc_read(uint16_t *raw_value);
 
 #ifdef __cplusplus
 }

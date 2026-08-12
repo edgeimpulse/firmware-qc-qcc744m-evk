@@ -99,7 +99,7 @@ bool ei_inertial_init(void)
     return true;
 }
 
-bool ei_fusion_inertial_read_data(int n_samples)
+float *ei_fusion_inertial_read_data(int n_samples)
 {
     struct sensor_value accel[3];
     struct sensor_value gyro[3];
@@ -108,16 +108,15 @@ bool ei_fusion_inertial_read_data(int n_samples)
     memset(inertial, 0, INERTIAL_AXIS_SAMPLED * sizeof(float));
 
 	if (!_is_present) {
-		return false;
+		return inertial;
 	}
 
     if (sensor_sample_fetch(lsm6dso) < 0) {
 		printk("error sensor_sample_fetch\n");
-		return false;
     }
     else {
-
-        sensor_channel_get(lsm6dso, SENSOR_CHAN_ACCEL_XYZ, accel);
+		
+        sensor_channel_get(lsm6dso, SENSOR_CHAN_ACCEL_XYZ, accel);		
         inertial[0] = sensor_value_to_double(&accel[0]);
         inertial[1] = sensor_value_to_double(&accel[1]);
         inertial[2] = sensor_value_to_double(&accel[2]);
@@ -132,7 +131,7 @@ bool ei_fusion_inertial_read_data(int n_samples)
 		ei_samples_callback(inertial, n_samples * sizeof(float));
     }
 
-    return true;
+    return inertial;
 }
 
 bool ei_inertial_read_data_fwd(float* intertial)
@@ -149,8 +148,8 @@ bool ei_inertial_read_data_fwd(float* intertial)
 		return false;
 	}
 	else {
-
-		sensor_channel_get(lsm6dso, SENSOR_CHAN_ACCEL_XYZ, accel);
+		
+		sensor_channel_get(lsm6dso, SENSOR_CHAN_ACCEL_XYZ, accel);		
 		intertial[0] = sensor_value_to_double(&accel[0]);
 		intertial[1] = sensor_value_to_double(&accel[1]);
 		intertial[2] = sensor_value_to_double(&accel[2]);

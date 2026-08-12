@@ -105,6 +105,20 @@ bool ei_pixels_set_color(uint32_t mask, uint8_t r, uint8_t g, uint8_t b);
  */
 bool ei_pixels_clear(void);
 
+/**
+ * @brief Start the status-indicator task.
+ *
+ * Spawns a task that blocks on application-state changes and colours the whole
+ * strip to reflect the current state:
+ *   - idle .................... green
+ *   - inference running ....... yellow
+ *   - data forward (inertial) . blue
+ *   - data forward (adc) ...... magenta
+ *
+ * @return true if the task was started, false if the board is absent.
+ */
+bool ei_pixels_start_status_task(void);
+
 #ifdef __cplusplus
 }
 #endif
